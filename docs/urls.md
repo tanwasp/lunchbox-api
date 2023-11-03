@@ -1,20 +1,3 @@
-# LunchBox WebApp
-
-This is a backend api of a restaurant search and review app. 
-
-## Technologies
-* __Languages__: JavaScript with Node and Express
-* __Database__: PostgreSQL
-
-## How to use
-1. Clone the repository
-2. Set up a local postgreSQL database with the formats and fields as specified in [postgreSQLData.md](./docs/postgreSQLData.md)
-3. Navigate to src
-4. Run "npm install"
-5. Add your unique database url to the .env file. 
-6. Run "npm start"
-7. Test with postman or open up http://localhost:5000/api/v1/restaurants to get started!
-
 ### HTTP requests and URLs
 default - /api/v1/restaurants
 example urls are assuming a port of 5000
@@ -88,3 +71,6 @@ example urls are assuming a port of 5000
             "name": "Messi" (optional)
             }
             ```
+    - type: GET
+        TO BE ADDED
+
