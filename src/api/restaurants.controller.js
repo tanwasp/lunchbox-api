@@ -12,6 +12,17 @@ export default class RestaurantsController {
       filters.zipcode = req.query.zipcode;
     } else if (req.query.name) {
       filters.name = req.query.name;
+    }  //else if (req.query.min_stars) {
+      //filters.min_stars = req.query.min_stars;
+    //}
+
+    let maxDistance = null;
+    let latitude = null;
+    let longitude = null;
+    if (req.query.max_distance && req.query.lat && req.query.lng) {
+      maxDistance = parseFloat(req.query.max_distance);
+      latitude = parseFloat(req.query.lat);
+      longitude = parseFloat(req.query.lng);
     }
 
     try {
@@ -19,6 +30,9 @@ export default class RestaurantsController {
         filters,
         page,
         restaurantsPerPage,
+        longitude,
+        latitude,
+        maxDistance
       });
 
       let response = {

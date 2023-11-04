@@ -13,7 +13,7 @@ example urls are assuming a port of 5000
             - example http://localhost:5000/api/v1/restaurants?cuisine=India
         - page
             - http://localhost:5000/api/v1/restaurants?page=2
-    - with no parameters, it returns a homepage of the first 20 restaurants in the mongoDB database
+    - with no parameters, it returns a homepage of the first 20 restaurants in the `restaurants` table
         - example http://localhost:5000/api/v1/restaurants
     - with full parameters
         - http://localhost:5000/api/v1/restaurants?name=cafe&zipcode=10012&cuisine=India&page=3

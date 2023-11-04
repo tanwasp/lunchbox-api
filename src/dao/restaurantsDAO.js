@@ -7,6 +7,9 @@ export default class RestaurantsDAO {
     filters = null,
     page = 0,
     restaurantsPerPage = 20,
+    longitude = null,
+    latitude = null,
+    maxDistance = null // in kilometers
   } = {}) {
     try {
       let whereClause = {};
@@ -19,6 +22,19 @@ export default class RestaurantsDAO {
         } else if ("zipcode" in filters) {
           whereClause.postalcode = filters.zipcode;
         }
+      }
+
+      // Add location filter if longitude, latitude, and maxDistance are provided
+      if (longitude !== null && latitude !== null && maxDistance !== null) {
+        whereClause[Op.and] = sequelize.where(
+          sequelize.fn(
+            'ST_DWithin',
+            sequelize.col('coordinates'),
+            sequelize.fn('ST_SetSRID', sequelize.fn('ST_MakePoint', longitude, latitude), 4326),
+            maxDistance * 1000 // Convert kilometers to meters
+          ),
+          true
+        );
       }
   
       const restaurants = await Restaurant.findAll({
