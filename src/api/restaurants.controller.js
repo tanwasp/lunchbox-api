@@ -19,6 +19,7 @@ export default class RestaurantsController {
     let maxDistance = null;
     let latitude = null;
     let longitude = null;
+    console.log('api, ' + req.query.max_distance + ' ' + req.query.lat + ' ' + req.query.lng)
     if (req.query.max_distance && req.query.lat && req.query.lng) {
       maxDistance = parseFloat(req.query.max_distance);
       latitude = parseFloat(req.query.lat);

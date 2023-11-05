@@ -25,23 +25,75 @@ export default class RestaurantsDAO {
       }
 
       // Add location filter if longitude, latitude, and maxDistance are provided
+      // Add location filter if longitude, latitude, and maxDistance are provided
       if (longitude !== null && latitude !== null && maxDistance !== null) {
         whereClause[Op.and] = sequelize.where(
+          sequelize.cast(sequelize.col('coordinates'), 'geography'),
           sequelize.fn(
             'ST_DWithin',
-            sequelize.col('coordinates'),
-            sequelize.fn('ST_SetSRID', sequelize.fn('ST_MakePoint', longitude, latitude), 4326),
+            sequelize.cast(sequelize.col('coordinates'), 'geography'),
+            sequelize.cast(
+              sequelize.fn('ST_SetSRID', sequelize.fn('ST_MakePoint', longitude, latitude), 4326),
+              'geography'
+            ),
             maxDistance * 1000 // Convert kilometers to meters
           ),
           true
         );
       }
+
+      
+  //   const restaurants = await sequelize.query(`
+  //   SELECT
+  //     "restaurantid",
+  //     "foreignresid",
+  //     "name",
+  //     "address",
+  //     "city",
+  //     "state",
+  //     "country",
+  //     "postalcode",
+  //     "coordinates",
+  //     "stars",
+  //     "pricerange",
+  //     "cuisine"
+  //   FROM
+  //     "restaurants"
+  //   WHERE
+  //     ST_DWithin(
+  //       CAST("coordinates" AS GEOGRAPHY),
+  //       ST_SetSRID(ST_MakePoint(:longitude, :latitude), 4326)::GEOGRAPHY,
+  //       :maxDistance * 1000
+  //     )
+  //   ORDER BY
+  //     ST_Distance(
+  //       CAST("coordinates" AS GEOGRAPHY),
+  //       ST_SetSRID(ST_MakePoint(:longitude, :latitude), 4326)::GEOGRAPHY
+  //     ) ASC
+  //   LIMIT :limit OFFSET :offset
+  // `, {
+  //   replacements: {
+  //     longitude,
+  //     latitude,
+  //     maxDistance,,
+  //     limit: restaurantsPerPage,
+  //     offset: restaurantsPerPage * page,
+  //   },
+  //   type: sequelize.QueryTypes.SELECT
+  // });
+
+      console.log('Querying with where clause:', whereClause);
   
       const restaurants = await Restaurant.findAll({
         where: whereClause,
+        // Add raw order clause
+        // order: sequelize.literal('ST_Distance(coordinates, ST_SetSRID(ST_MakePoint(:longitude, :latitude), 4326)) ASC'),
         limit: restaurantsPerPage,
-        offset: restaurantsPerPage * page
+        offset: restaurantsPerPage * page,
+        // Bind longitude and latitude values to the query
+        // replacements: { longitude, latitude },
       });
+      
   
       const totalNumRestaurants = await Restaurant.count({ where: whereClause });
   
