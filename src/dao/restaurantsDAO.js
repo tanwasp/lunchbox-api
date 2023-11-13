@@ -94,9 +94,9 @@ export default class RestaurantsDAO {
         // replacements: { longitude, latitude },
       });
       
-  
+
       const totalNumRestaurants = await Restaurant.count({ where: whereClause });
-  
+
       return { restaurantsList: restaurants, totalNumRestaurants };
     } catch (e) {
       console.error(`Unable to get restaurants, ${e}`);
