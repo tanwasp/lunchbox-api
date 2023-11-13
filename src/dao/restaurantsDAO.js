@@ -12,97 +12,94 @@ export default class RestaurantsDAO {
     maxDistance = null // in kilometers
   } = {}) {
     try {
-      let whereClause = {};
+      let whereClause = [];
   
+      // Common filters
       if (filters) {
         if ("name" in filters) {
-          whereClause.name = { [Op.like]: `%${filters.name}%` };
-        } else if ("cuisine" in filters) {
-          whereClause.cuisine = filters.cuisine;
-        } else if ("zipcode" in filters) {
-          whereClause.postalcode = filters.zipcode;
+          whereClause.push(`name LIKE '%${filters.name}%'`);
+        }
+        if ("cuisine" in filters) {
+          whereClause.push(`cuisine = '${filters.cuisine}'`);
+        }
+        if ("zipcode" in filters) {
+          whereClause.push(`postalcode = '${filters.zipcode}'`);
         }
       }
 
-      // Add location filter if longitude, latitude, and maxDistance are provided
-      // Add location filter if longitude, latitude, and maxDistance are provided
-      if (longitude !== null && latitude !== null && maxDistance !== null) {
-        whereClause[Op.and] = sequelize.where(
-          sequelize.cast(sequelize.col('coordinates'), 'geography'),
-          sequelize.fn(
-            'ST_DWithin',
-            sequelize.cast(sequelize.col('coordinates'), 'geography'),
-            sequelize.cast(
-              sequelize.fn('ST_SetSRID', sequelize.fn('ST_MakePoint', longitude, latitude), 4326),
-              'geography'
-            ),
-            maxDistance * 1000 // Convert kilometers to meters
-          ),
-          true
-        );
-      }
-
-      
-  //   const restaurants = await sequelize.query(`
-  //   SELECT
-  //     "restaurantid",
-  //     "foreignresid",
-  //     "name",
-  //     "address",
-  //     "city",
-  //     "state",
-  //     "country",
-  //     "postalcode",
-  //     "coordinates",
-  //     "stars",
-  //     "pricerange",
-  //     "cuisine"
-  //   FROM
-  //     "restaurants"
-  //   WHERE
-  //     ST_DWithin(
-  //       CAST("coordinates" AS GEOGRAPHY),
-  //       ST_SetSRID(ST_MakePoint(:longitude, :latitude), 4326)::GEOGRAPHY,
-  //       :maxDistance * 1000
-  //     )
-  //   ORDER BY
-  //     ST_Distance(
-  //       CAST("coordinates" AS GEOGRAPHY),
-  //       ST_SetSRID(ST_MakePoint(:longitude, :latitude), 4326)::GEOGRAPHY
-  //     ) ASC
-  //   LIMIT :limit OFFSET :offset
-  // `, {
-  //   replacements: {
-  //     longitude,
-  //     latitude,
-  //     maxDistance,,
-  //     limit: restaurantsPerPage,
-  //     offset: restaurantsPerPage * page,
-  //   },
-  //   type: sequelize.QueryTypes.SELECT
-  // });
-
-      console.log('Querying with where clause:', whereClause);
   
-      const restaurants = await Restaurant.findAll({
-        where: whereClause,
-        // Add raw order clause
-        // order: sequelize.literal('ST_Distance(coordinates, ST_SetSRID(ST_MakePoint(:longitude, :latitude), 4326)) ASC'),
+      // Initialize SQL query
+      let query = "SELECT * FROM restaurants";
+  
+      // Add location-based logic if latitude and longitude are provided
+      if (longitude !== null && latitude !== null) {
+        query = `
+          SELECT 
+            *,
+            ST_Distance(
+              coordinates::geometry,
+              ST_SetSRID(ST_MakePoint(:latitude, :longitude), 4326)::geometry
+            ) AS distance_in_meters
+          FROM 
+            restaurants
+        `;
+  
+        // Append location-based filter
+        if (maxDistance !== null) {
+          whereClause.push(`
+            ST_DWithin(
+              coordinates::geometry,
+              ST_SetSRID(ST_MakePoint(:latitude, :longitude), 4326)::geometry,
+              :maxDistance
+            )
+          `);
+        }
+      }
+  
+      // Combine all where clauses
+      if (whereClause.length > 0) {
+        query += ` WHERE ${whereClause.join(' AND ')}`;
+      }
+  
+      // Append order by and pagination
+      if (longitude !== null && latitude !== null) {
+        query += ` ORDER BY distance_in_meters ASC`;
+      }
+      query += ` LIMIT :limit OFFSET :offset`;
+  
+      const replacements = {
+        longitude,
+        latitude,
+        maxDistance: maxDistance ? maxDistance * 1000 : null, // Convert kilometers to meters, handle null
         limit: restaurantsPerPage,
-        offset: restaurantsPerPage * page,
-        // Bind longitude and latitude values to the query
-        // replacements: { longitude, latitude },
+        offset: restaurantsPerPage * page
+      };
+  
+      const restaurants = await sequelize.query(query, {
+        replacements,
+        type: sequelize.QueryTypes.SELECT
       });
-      
-
-      const totalNumRestaurants = await Restaurant.count({ where: whereClause });
-
+  
+      // Adjusted query for counting total restaurants
+      let countQuery = `SELECT COUNT(*) FROM restaurants`;
+      if (whereClause.length > 0) {
+        countQuery += ` WHERE ${whereClause.join(' AND ')}`;
+      }
+  
+      const totalNumRestaurantsResult = await sequelize.query(countQuery, {
+        replacements,
+        type: sequelize.QueryTypes.SELECT
+      });
+  
+      const totalNumRestaurants = totalNumRestaurantsResult[0].count;
+  
       return { restaurantsList: restaurants, totalNumRestaurants };
     } catch (e) {
       console.error(`Unable to get restaurants, ${e}`);
       return { restaurantsList: [], totalNumRestaurants: 0 };
     }
   }
+  
   
 
   static async getRestaurantByID(id) {
