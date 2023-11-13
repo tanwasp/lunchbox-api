@@ -13,6 +13,11 @@ example urls are assuming a port of 5000
             - example http://localhost:5000/api/v1/restaurants?cuisine=India
         - page
             - http://localhost:5000/api/v1/restaurants?page=2
+        - location
+            - http://localhost:5000/api/v1/restaurants?lat=40.6937056&lng=-73.99219&max_distance=1
+            - lat is latitude
+            - lng is longitude
+            - max_distance is maximum distance from given location in kilometers
     - with no parameters, it returns a homepage of the first 20 restaurants in the `restaurants` table
         - example http://localhost:5000/api/v1/restaurants
     - with full parameters

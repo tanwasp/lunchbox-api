@@ -32,7 +32,7 @@
     - **type**: varchar
 - **coordinates**
     - geographical coordinates of the restaurant
-    - **type**: point
+    - **type**: geometry point
 - **stars**
     - average rating of the restaurant
     - **type**: double

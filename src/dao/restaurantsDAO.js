@@ -36,9 +36,9 @@ export default class RestaurantsDAO {
         query = `
           SELECT 
             *,
-            ST_Distance(
+            ST_DistanceSphere(
               coordinates::geometry,
-              ST_SetSRID(ST_MakePoint(:latitude, :longitude), 4326)::geometry
+              ST_SetSRID(ST_MakePoint(:latitude, :longitude), 4326)
             ) AS distance_in_meters
           FROM 
             restaurants
@@ -46,13 +46,10 @@ export default class RestaurantsDAO {
   
         // Append location-based filter
         if (maxDistance !== null) {
-          whereClause.push(`
-            ST_DWithin(
-              coordinates::geometry,
-              ST_SetSRID(ST_MakePoint(:latitude, :longitude), 4326)::geometry,
-              :maxDistance
-            )
-          `);
+          whereClause.push(`ST_DistanceSphere(
+            coordinates::geometry,
+            ST_SetSRID(ST_MakePoint(:latitude, :longitude), 4326)
+          ) <= :maxDistance`);
         }
       }
   
